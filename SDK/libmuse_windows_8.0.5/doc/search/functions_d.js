@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['set_5flicense_5fdata_0',['set_license_data',['../classinteraxon_1_1bridge_1_1_muse.html#a207c84a2673ca83025854eead6857937',1,'interaxon::bridge::Muse']]],
+  ['set_5flog_5flistener_1',['set_log_listener',['../classinteraxon_1_1bridge_1_1_log_manager.html#aa4a748a5d2bd6954d5f64f629ede39c7',1,'interaxon::bridge::LogManager']]],
+  ['set_5fminimum_5fseverity_2',['set_minimum_severity',['../classinteraxon_1_1bridge_1_1_log_manager.html#a0fd63278cfa0f2543b4e5e586b69ba5e',1,'interaxon::bridge::LogManager']]],
+  ['set_5fmuse_5flistener_3',['set_muse_listener',['../classinteraxon_1_1bridge_1_1_muse_manager.html#a09a7e7f006106f998e8a7d0d20795f40',1,'interaxon::bridge::MuseManager']]],
+  ['set_5fnotch_5ffrequency_4',['set_notch_frequency',['../classinteraxon_1_1bridge_1_1_muse.html#a1936b8edbac90c239cd1b4412802875c',1,'interaxon::bridge::Muse']]],
+  ['set_5fnum_5fconnect_5ftries_5',['set_num_connect_tries',['../classinteraxon_1_1bridge_1_1_muse.html#a7c14c72dc1587452924da325f9e6b083',1,'interaxon::bridge::Muse']]],
+  ['set_5fplayback_5flistener_6',['set_playback_listener',['../classinteraxon_1_1bridge_1_1_reader_muse.html#a8035941441803dc04e6162a76d73f35c',1,'interaxon::bridge::ReaderMuse']]],
+  ['set_5fplayback_5fsettings_7',['set_playback_settings',['../classinteraxon_1_1bridge_1_1_reader_muse.html#ae11f17ab65ac0193d5307772b8b58c26',1,'interaxon::bridge::ReaderMuse']]],
+  ['set_5fpreset_8',['set_preset',['../classinteraxon_1_1bridge_1_1_muse.html#abba7b627c86e7ca0b2d4548f37410ba4',1,'interaxon::bridge::Muse']]],
+  ['set_5fproperty_9',['set_property',['../classinteraxon_1_1bridge_1_1_muse.html#ade6f5bfd67ac0b9eefdfc46bd808e810',1,'interaxon::bridge::Muse']]],
+  ['set_5freader_5flistener_10',['set_reader_listener',['../classinteraxon_1_1bridge_1_1_reader_muse.html#a17df9ca14ad747fb9fc62584bb899de5',1,'interaxon::bridge::ReaderMuse']]],
+  ['set_5frecorder_5finfo_11',['set_recorder_info',['../classinteraxon_1_1bridge_1_1_muse_manager_windows.html#a4e69cd0dfdd6a5a0b8e625da624a9017',1,'interaxon::bridge::MuseManagerWindows']]],
+  ['set_5ftimestamp_12',['set_timestamp',['../classinteraxon_1_1bridge_1_1_muse_file_writer.html#aa5a4b1c21be3b4f8bbe227994080f3fc',1,'interaxon::bridge::MuseFileWriter']]],
+  ['set_5ftimestamp_5fmode_13',['set_timestamp_mode',['../classinteraxon_1_1bridge_1_1_muse_file_writer.html#ab2cf12a8e9710af60d1f17071170b6eb',1,'interaxon::bridge::MuseFileWriter']]],
+  ['skip_5fpacket_5ftypes_14',['skip_packet_types',['../classinteraxon_1_1bridge_1_1_reader_muse_builder.html#aed3b18f8cfd057a6f95c84e47589021b',1,'interaxon::bridge::ReaderMuseBuilder']]],
+  ['start_5flistening_15',['start_listening',['../classinteraxon_1_1bridge_1_1_muse_manager.html#a657c4b8bc1d5347cf2594f1c095a27d2',1,'interaxon::bridge::MuseManager']]],
+  ['stop_5flistening_16',['stop_listening',['../classinteraxon_1_1bridge_1_1_muse_manager.html#abae0227d93ac52ad74b662552d7c0b68',1,'interaxon::bridge::MuseManager']]],
+  ['stop_5fplayback_17',['stop_playback',['../classinteraxon_1_1bridge_1_1_reader_muse.html#a0fe234a39ee44caa3b3679514750c684',1,'interaxon::bridge::ReaderMuse']]]
+];

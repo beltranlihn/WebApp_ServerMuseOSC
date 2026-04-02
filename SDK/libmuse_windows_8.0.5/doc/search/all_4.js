@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['eeg_0',['EEG',['../namespaceinteraxon_1_1bridge.html#abc1ba4cb58984b0cd706e2c8995cda05a679310a95d28d9a928a0eb6960d3ea27',1,'interaxon::bridge::EEG'],['../namespaceinteraxon_1_1bridge.html#a7563f828d33f62e2b2f161b41a0d6846a679310a95d28d9a928a0eb6960d3ea27',1,'interaxon::bridge::EEG']]],
+  ['eeg_1',['Eeg',['../namespaceinteraxon_1_1bridge.html#a6374a07a5b4557eddd90185c007455b9',1,'interaxon::bridge']]],
+  ['eeg1_2',['EEG1',['../namespaceinteraxon_1_1bridge.html#a6374a07a5b4557eddd90185c007455b9a54fa737e49d9b6bd318caa85fb1069c5',1,'interaxon::bridge']]],
+  ['eeg2_3',['EEG2',['../namespaceinteraxon_1_1bridge.html#a6374a07a5b4557eddd90185c007455b9aa74d3baa29f2a8552337d0a22626f050',1,'interaxon::bridge']]],
+  ['eeg3_4',['EEG3',['../namespaceinteraxon_1_1bridge.html#a6374a07a5b4557eddd90185c007455b9af8dad34c2b731f1ca8bb6dbf6f1737e0',1,'interaxon::bridge']]],
+  ['eeg4_5',['EEG4',['../namespaceinteraxon_1_1bridge.html#a6374a07a5b4557eddd90185c007455b9a1d0f3d91bcb47b8d5b461fd14b8befdf',1,'interaxon::bridge']]],
+  ['eeg_5fdropped_6',['EEG_DROPPED',['../namespaceinteraxon_1_1bridge.html#abc1ba4cb58984b0cd706e2c8995cda05ad22b8d2fc502a1704f4d11121ecaf559',1,'interaxon::bridge']]],
+  ['enable_5fdata_5ftransmission_7',['enable_data_transmission',['../classinteraxon_1_1bridge_1_1_muse.html#adf0d5fd0cadad530615f7b391741b4b4',1,'interaxon::bridge::Muse']]],
+  ['enable_5fexception_8',['enable_exception',['../classinteraxon_1_1bridge_1_1_muse.html#a7ac0f605d8c71c8e9896e45e870fe09f',1,'interaxon::bridge::Muse']]],
+  ['enable_5fled_5findicator_9',['enable_led_indicator',['../classinteraxon_1_1bridge_1_1_muse.html#acce836c82822e6ad245756a86d656fd0',1,'interaxon::bridge::Muse']]],
+  ['error_10',['Error',['../structinteraxon_1_1bridge_1_1_error.html',1,'interaxon::bridge::Error'],['../structinteraxon_1_1bridge_1_1_error.html#ac5bd8c10c951c9a3eec8285a4bb2414d',1,'interaxon::bridge::Error::Error()']]],
+  ['errortype_11',['ErrorType',['../namespaceinteraxon_1_1bridge.html#a8fad51e347587fb468a0548b3e8ab72e',1,'interaxon::bridge']]],
+  ['event_5fid_12',['event_id',['../structinteraxon_1_1bridge_1_1_annotation_data.html#a5b3146e68c2023c4c2c9e722760d3650',1,'interaxon::bridge::AnnotationData']]],
+  ['event_5floop_5ffactory_2eh_13',['event_loop_factory.h',['../event__loop__factory_8h.html',1,'']]],
+  ['event_5ftype_14',['event_type',['../structinteraxon_1_1bridge_1_1_annotation_data.html#ac0c22044502b5196e9b460c447a9c547',1,'interaxon::bridge::AnnotationData']]],
+  ['eventloop_15',['EventLoop',['../classinteraxon_1_1bridge_1_1_event_loop.html',1,'interaxon::bridge']]],
+  ['eventloopfactory_16',['EventLoopFactory',['../classinteraxon_1_1bridge_1_1_event_loop_factory.html',1,'interaxon::bridge']]],
+  ['exceptions_17',['Exceptions',['../index.html#autotoc_md5',1,'']]],
+  ['execute_18',['execute',['../classinteraxon_1_1bridge_1_1_muse.html#a8c09309e9cc7ca88de6c7b51575e87dc',1,'interaxon::bridge::Muse']]],
+  ['explicit_19',['EXPLICIT',['../namespaceinteraxon_1_1bridge.html#a77c19f0e0f64fd8b9aa0372002cccb61a440806ada035e97a59ec9d2ca6796cb3',1,'interaxon::bridge']]]
+];

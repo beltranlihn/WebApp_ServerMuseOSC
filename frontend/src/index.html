@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul Charger - VR Biorreactivo</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- ELIMINADO: BOTÓN DEV -->
+
+    <!-- ELIMINADO: CONSOLA DEVELOPER OSC DIAGNOSTICS -->
+
+    <div id="app-container">
+        <!-- PANTALLA DE LOGIN -->
+        <div id="login-screen" class="view active">
+            <h1 class="brand-title">SOUL CHARGER</h1>
+            <p class="subtitle">Sincroniza tus frecuencias</p>
+            <button id="btn-google-login" class="btn-primary">INICIAR SESIÓN</button>
+        </div>
+
+        <!-- DASHBOARD BIORREACTIVO (INDICADORES DE CALMA) -->
+        <div id="dashboard-screen" class="view hidden">
+            <!-- Esfera reactiva (Representación visual del aura/ondas) -->
+            <div class="bio-indicator-container">
+                <div id="aura-sphere" class="sphere"></div>
+            </div>
+            
+            <!-- Panel de Estadísticas Oculto en Fondo VR o HUD en pantalla -->
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <span class="label">BPM</span>
+                    <span id="val-bpm" class="value">--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">ALPHA</span>
+                    <span id="val-alpha" class="value">--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">BETA</span>
+                    <span id="val-beta" class="value">--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">ESTADO</span>
+                    <span id="val-state" class="value">Calibrando...</span>
+                </div>
+            </div>
+
+            <!-- Gráfico Biofeedback -->
+            <div class="chart-container">
+                <canvas id="bioChart"></canvas>
+            </div>
+            
+            <button id="btn-end-session" class="btn-secondary">FINALIZAR INMERSIÓN</button>
+        </div>
+
+        <!-- PANTALLA 3: FIN DE SESION -->
+        <div id="end-screen" class="view hidden" style="text-align: center;">
+            <div style="background: rgba(3, 5, 8, 0.4); border: 1px solid rgba(46, 196, 182, 0.3); padding: 3rem; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(15px);">
+                <h1 class="brand-title" style="font-size: 2.5rem; text-shadow: 0 0 15px rgba(46,196,182,0.5); margin-bottom: 0.5rem; color: #FDFFFC;">⚡ CARGA COMPLETADA</h1>
+                <p style="color: var(--text-secondary); letter-spacing: 0.1em; margin: 1.5rem 0;">La información biométrica ha sido sincronizada exitosamente.</p>
+                <p style="color: #2ec4b6; margin-bottom: 3rem; font-size: 0.9rem; letter-spacing: 0.1em;">Retirate el visor de la cabeza.</p>
+                <button id="btn-restart">NUEVA EXPERIENCIA</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="app.js"></script>
+</body>
+</html>

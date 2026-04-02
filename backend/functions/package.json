@@ -1,0 +1,13 @@
+{
+  "name": "soul-charger-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for analyzing EEG and HR data",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.5.0",
+    "firebase-functions": "^4.2.0"
+  }
+}

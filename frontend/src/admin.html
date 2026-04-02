@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul Charger - Administración</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
+        .admin-panel { background: rgba(0,0,0,0.6); border-radius: 20px; padding: 2rem; border: 1px solid var(--accent); max-width: 600px; width: 100%; text-align: center; }
+        .admin-panel h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 300; letter-spacing: 2px; margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="admin-panel">
+        <h1>PANEL DE CONTROL</h1>
+        
+        <button id="btn-connect-muse" class="btn-primary" style="margin-bottom: 2rem; width: 100%;">CONECTAR MUSE 2</button>
+        <button id="btn-update-conn" style="display:none;"></button> <!-- Parche legacy de botones dev -->
+        
+        <div id="algo-status" style="margin-bottom: 2rem; padding: 1rem; background: rgba(46,196,182,0.1); border: 1px dashed #2ec4b6; border-radius: 5px; text-align: center;">
+            <h4 style="color:#2ec4b6; margin-bottom: 0.5rem; letter-spacing: 0.1em; font-size:0.8rem;">ALGORITHM STATE (MUSE V2)</h4>
+            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom:0.5rem;" id="indicator-state">DISCONNECTED</div>
+            <div style="font-size: 0.8rem; color: #8492a6;" id="indicator-desc">Conecta el casco para iniciar flujo.</div>
+            <div id="progress-bar-container" style="display: none; width: 100%; background: rgba(0,0,0,0.5); height: 10px; border-radius: 5px; margin-top: 1rem; overflow: hidden; border: 1px solid rgba(253,255,252,0.2);">
+                <div id="progress-bar" style="width: 0%; height: 100%; background: #2ec4b6; transition: width 0.2s;"></div>
+            </div>
+        </div>
+        
+        <div id="dev-console" class="dev-panel" style="position:static; width: 100%; box-sizing: border-box; text-align: left;">
+            <div class="dev-header">
+                <h3>OSC DIAGNOSTICS</h3>
+                <span id="osc-status" class="status-indicator offline">OFFLINE</span>
+            </div>
+            <div class="dev-body">
+                <div class="info-group">
+                    <span class="label">Relay WS:</span>
+                    <span class="value" style="font-size: 0.7rem;">ws://localhost:8080</span>
+                </div>
+                <div class="info-group">
+                    <span class="label">Target IP:</span>
+                    <input type="text" id="inp-osc-ip" class="dev-input" value="127.0.0.1">
+                </div>
+                <div class="info-group">
+                    <span class="label">Target Port:</span>
+                    <input type="number" id="inp-osc-port" class="dev-input" value="8000">
+                </div>
+                <button id="btn-update-conn" class="btn-dev-action" style="background: transparent;">VERIFY / UPDATE TARGET</button>
+
+                <div class="log-container">
+                    <h4>[ CONNECTION DIAGNOSTIC LOG ]</h4>
+                    <div id="osc-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
