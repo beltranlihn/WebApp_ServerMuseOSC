@@ -31,6 +31,25 @@ function initUDP() {
 
 initUDP();
 
+// ==========================================
+// NaN SHIELD: Retención del Último Valor Sano
+// ==========================================
+let lastValidValues = {
+    status_on: 0.0, status_active: 0.0,
+    gyro1: 0.0, gyro2: 0.0, gyro3: 0.0,
+    accel1: 0.0, accel2: 0.0, accel3: 0.0,
+    eeg_alpha: 0.0, eeg_beta: 0.0, eeg_gamma: 0.0, eeg_theta: 0.0, eeg_delta: 0.0,
+    calm_state: 0.0, heart_rate: 75.0, calib_progress: 0.0, calm_final: 0.0
+};
+
+function safeFloat(val, key) {
+    if (val == null || typeof val === 'undefined' || Number.isNaN(Number(val))) {
+        return lastValidValues[key];
+    }
+    lastValidValues[key] = Number(val);
+    return lastValidValues[key];
+}
+
 const wss = new WebSocket.Server({ port: 8080 });
 
 wss.on('connection', function connection(ws) {
@@ -61,42 +80,64 @@ wss.on('connection', function connection(ws) {
                 const {
                     sensorOn, sensorActive, gyro, accel, 
                     alpha, beta, gamma, theta, delta, 
-                    calm, bpm, calibProgress
+                    calm, bpm, calibProgress, calm_final
                 } = parsedData;
 
-                const finalStatusOn = sensorOn ? 1 : 0;
-                const finalStatusActive = sensorActive ? 1 : 0;
-                const isOff = (finalStatusOn === 0 || finalStatusActive === 0);
+                let fOn = safeFloat(sensorOn ? 1 : 0, 'status_on');
+                let fAct = safeFloat(sensorActive ? 1 : 0, 'status_active');
+                const isOff = (fOn === 0 || fAct === 0);
 
-                // Enviar direcciones OSC completamente separadas para proveer "Nombres" directos (Ideal para TouchDesigner)
-                const p = "/muse";
-                udpPort.send({ address: `${p}/status_on`, args: [{ type: "f", value: finalStatusOn }] }); // TD prefiere Floats
-                udpPort.send({ address: `${p}/status_active`, args: [{ type: "f", value: finalStatusActive }] });
-                udpPort.send({ address: `${p}/gyro1`, args: [{ type: "f", value: (isOff || !gyro) ? 0.0 : gyro[0] }] });
-                udpPort.send({ address: `${p}/gyro2`, args: [{ type: "f", value: (isOff || !gyro) ? 0.0 : gyro[1] }] });
-                udpPort.send({ address: `${p}/gyro3`, args: [{ type: "f", value: (isOff || !gyro) ? 0.0 : gyro[2] }] });
-                udpPort.send({ address: `${p}/accel1`, args: [{ type: "f", value: (isOff || !accel) ? 0.0 : accel[0] }] });
-                udpPort.send({ address: `${p}/accel2`, args: [{ type: "f", value: (isOff || !accel) ? 0.0 : accel[1] }] });
-                udpPort.send({ address: `${p}/accel3`, args: [{ type: "f", value: (isOff || !accel) ? 0.0 : accel[2] }] });
-                udpPort.send({ address: `${p}/eeg_alpha`, args: [{ type: "f", value: isOff ? 0.0 : alpha }] });
-                udpPort.send({ address: `${p}/eeg_beta`, args: [{ type: "f", value: isOff ? 0.0 : beta }] });
-                udpPort.send({ address: `${p}/eeg_gamma`, args: [{ type: "f", value: isOff ? 0.0 : gamma }] });
-                udpPort.send({ address: `${p}/eeg_theta`, args: [{ type: "f", value: isOff ? 0.0 : theta }] });
-                udpPort.send({ address: `${p}/eeg_delta`, args: [{ type: "f", value: isOff ? 0.0 : delta }] });
-                udpPort.send({ address: `${p}/calm_state`, args: [{ type: "f", value: isOff ? 0.0 : calm }] });
-                // JSON.stringify convierte NaN en null, así que la validación debe atrapar nulos y strings malos
-                let safeBPM = (bpm == null || isNaN(bpm)) ? 75.0 : Number(bpm);
-                udpPort.send({ address: `${p}/heart_rate`, args: [{ type: "f", value: isOff ? 0.0 : safeBPM }] });
-                udpPort.send({ address: `${p}/calib_progress`, args: [{ type: "f", value: isOff ? 0.0 : (calibProgress || 0.0) }] });
+                let g1 = safeFloat(gyro ? gyro[0] : 0, 'gyro1');
+                let g2 = safeFloat(gyro ? gyro[1] : 0, 'gyro2');
+                let g3 = safeFloat(gyro ? gyro[2] : 0, 'gyro3');
 
-                // Mantenemos soporte del Modo Espejo UI legacy enviando el mirror_bio
-                const mirrorMsg = JSON.stringify({ type: 'mirror_bio', bpm: bpm, alpha: alpha, beta: beta });
+                let a1 = safeFloat(accel ? accel[0] : 0, 'accel1');
+                let a2 = safeFloat(accel ? accel[1] : 0, 'accel2');
+                let a3 = safeFloat(accel ? accel[2] : 0, 'accel3');
+
+                // Aplicar escudo de ceros matemático obligatorio si el Killswitch está accionado
+                const v = {
+                    1: fOn, 2: fAct,
+                    3: isOff ? 0.0 : g1,
+                    4: isOff ? 0.0 : g2,
+                    5: isOff ? 0.0 : g3,
+                    6: isOff ? 0.0 : a1,
+                    7: isOff ? 0.0 : a2,
+                    8: isOff ? 0.0 : a3,
+                    9: isOff ? 0.0 : safeFloat(alpha, 'eeg_alpha'),
+                    10: isOff ? 0.0 : safeFloat(beta, 'eeg_beta'),
+                    11: isOff ? 0.0 : safeFloat(gamma, 'eeg_gamma'),
+                    12: isOff ? 0.0 : safeFloat(theta, 'eeg_theta'),
+                    13: isOff ? 0.0 : safeFloat(delta, 'eeg_delta'),
+                    14: isOff ? 0.0 : safeFloat(calm, 'calm_state'),
+                    15: isOff ? 0.0 : safeFloat(bpm, 'heart_rate'),
+                    16: safeFloat(calibProgress, 'calib_progress'),
+                    17: isOff ? 0.0 : safeFloat(calm_final, 'calm_final')
+                };
+
+                // Revertido al Array Bloque Único (Monolithic Payload) para evitar problemas de Blueprint
+                udpPort.send({
+                    address: "/muse/data",
+                    args: [
+                        { type: "f", value: v[1] }, { type: "f", value: v[2] },
+                        { type: "f", value: v[3] }, { type: "f", value: v[4] }, { type: "f", value: v[5] },
+                        { type: "f", value: v[6] }, { type: "f", value: v[7] }, { type: "f", value: v[8] },
+                        { type: "f", value: v[9] }, { type: "f", value: v[10] }, { type: "f", value: v[11] },
+                        { type: "f", value: v[12] }, { type: "f", value: v[13] }, 
+                        { type: "f", value: v[14] }, { type: "f", value: v[15] },
+                        { type: "f", value: v[16] }, { type: "f", value: v[17] }
+                    ]
+                });
+
+                // Mantenemos soporte del Modo Espejo UI legacy enviando el mirror_bio ampliado
+                const mirrorMsg = JSON.stringify({ type: 'mirror_bio', calm: v[14], bpm: v[15], calibProgress: v[16] });
                 wss.clients.forEach(client => {
                     if (client.readyState === WebSocket.OPEN) client.send(mirrorMsg);
                 });
 
-                if (Math.random() < 0.05) { // Console throttling
+                if (Math.random() < 0.05) { // Console throttling 
                     ws.send(JSON.stringify({ status: 'info', msg: `Matriz Emitida: Act [${sensorActive}], Calm [${calm.toFixed(2)}]` }));
+                    console.log(`[DEBUG] Enviando a OSC -> [On:${v[1]}, Act:${v[2]}, Calm:${v[14].toFixed(2)}, BPM:${v[15].toFixed(1)}]`);
                 }
             }
         } catch (e) {

@@ -1,4 +1,4 @@
-import { auth, provider, signInWithPopup, createSession, pushDataBucket, finishSession } from './firebase-config.js';
+import { auth, provider, signInWithPopup, createSession, pushDataBucket, finishSession } from './firebase-config.js?v=2';
 
 let currentSessionId = null;
 let currentUserId = null;
@@ -25,23 +25,13 @@ if (ctx) {
                   tension: 0.1
                 },
                 { 
-                  label: 'Alpha (x100)', 
+                  label: 'Calm State [0-1]', 
                   data: [], 
                   borderColor: '#2ec4b6', 
                   fill: false,
                   borderWidth: 2,
                   pointRadius: 0,
-                  tension: 0.1
-                },
-                { 
-                  label: 'Beta (x100)', 
-                  data: [], 
-                  borderColor: '#FDFFFC', 
-                  fill: false,
-                  borderWidth: 1,
-                  borderDash: [5, 5],
-                  pointRadius: 0,
-                  tension: 0.1
+                  tension: 0
                 }
             ]
         },
@@ -72,6 +62,7 @@ if (ctx) {
 
 // UI Elements
 const loginScreen = document.getElementById('login-screen');
+const calibrationScreen = document.getElementById('calibration-screen');
 const dashboardScreen = document.getElementById('dashboard-screen');
 const endScreen = document.getElementById('end-screen');
 const btnLogin = document.getElementById('btn-google-login');
@@ -80,18 +71,35 @@ const btnRestart = document.getElementById('btn-restart');
 
 const sphere = document.getElementById('aura-sphere');
 const valBpm = document.getElementById('val-bpm');
-const valAlpha = document.getElementById('val-alpha');
-const valBeta = document.getElementById('val-beta');
+const valCalm = document.getElementById('val-calm');
 const valState = document.getElementById('val-state');
+
+const uiCalibBar = document.getElementById('ui-calib-bar');
+const uiCalibText = document.getElementById('ui-calib-text');
+
+let isInCalibration = false;
+let isRunning = false;
 
 // UI logic below
 
 // WebSockets will now be exclusively handled by admin.js.
 
 // Transition logic
-function showDashboard() {
+function showCalibration() {
     loginScreen.classList.remove('active');
     loginScreen.classList.add('hidden');
+    isInCalibration = true;
+    setTimeout(() => {
+        calibrationScreen.classList.remove('hidden');
+        calibrationScreen.classList.add('active');
+    }, 700);
+}
+
+function showDashboard() {
+    calibrationScreen.classList.remove('active');
+    calibrationScreen.classList.add('hidden');
+    isInCalibration = false;
+    isRunning = true;
     setTimeout(() => {
         dashboardScreen.classList.remove('hidden');
         dashboardScreen.classList.add('active');
@@ -107,7 +115,8 @@ btnLogin.addEventListener('click', async () => {
         currentUserId = "demo_user";
         currentSessionId = "demo_session_" + Date.now();
     }
-    showDashboard();
+    // Empieza en calibracion, no pasamos directo al dashboard
+    showCalibration();
     uploadInterval = setInterval(async () => {
         if(currentEegBucket.length > 0 || currentHrBucket.length > 0) {
             try { await pushDataBucket(currentUserId, currentSessionId, currentEegBucket, currentHrBucket); } catch(e) { }
@@ -145,44 +154,55 @@ if (btnRestart) {
 }
 
 // Endpoint global inyectado por Unreal Engine WebBrowser C++
-window.updateBioData = (bpm, alpha, beta) => {
-    valBpm.innerText = Math.round(bpm);
-    valAlpha.innerText = alpha.toFixed(3);
-    valBeta.innerText = beta.toFixed(3);
+window.updateBioData = (bpm, calmScore, calibProgress) => {
     
+    // Lógica de ruteo de Pantallas Automática
+    if (isInCalibration) {
+        if (uiCalibBar) uiCalibBar.style.width = `${calibProgress}%`;
+        if (uiCalibText) uiCalibText.innerText = `${Math.round(calibProgress)}%`;
+        if (calibProgress >= 100) {
+            showDashboard();
+        }
+        return; // No actualizamos dashboard si estamos calibrando
+    }
+    if (!isRunning) return;
+
+    valBpm.innerText = Math.round(bpm);
+    valCalm.innerText = calmScore.toFixed(3);
+    
+    // Convert logic if you want to store it in fb (Optional)
     const timestamp = Date.now();
     currentHrBucket.push({ timestamp, bpm });
-    currentEegBucket.push({ timestamp, alpha, beta });
+    currentEegBucket.push({ timestamp, calmScore });
     
     // Update Chart
     if (bioChart) {
         const timeLabel = new Date().toLocaleTimeString();
         bioChart.data.labels.push(timeLabel);
         bioChart.data.datasets[0].data.push(bpm);
-        bioChart.data.datasets[1].data.push(alpha * 100);
-        bioChart.data.datasets[2].data.push(beta * 100);
+        bioChart.data.datasets[1].data.push(calmScore * 100); // Scale 0-1 to 0-100 visual line
         
-        // Mantener un historial mucho más largo (200 puntos) para que la gráfica avance lentamente
-        if (bioChart.data.labels.length > 200) {
+        // Mantener 10 segundos a 60Hz -> ~600 puntos
+        if (bioChart.data.labels.length > 600) {
             bioChart.data.labels.shift();
             bioChart.data.datasets.forEach(dataset => dataset.data.shift());
         }
         bioChart.update();
     }
     
-    updateVisuals(bpm, alpha, beta);
+    updateVisuals(bpm, calmScore);
 };
 
-// Logica sensorial
-function updateVisuals(bpm, alpha, beta) {
-    if (alpha > beta * 1.5 && bpm < 80) {
+// Logica sensorial adaptada a Z-Score
+function updateVisuals(bpm, calmScore) {
+    if (calmScore > 0.7) {
         valState.innerText = "CALMA PROFUNDA";
         sphere.style.background = "var(--aura-calm)";
         sphere.style.transform = "scale(1.3)";
         sphere.style.filter = "blur(70px)";
         sphere.style.animationDuration = "6s";
-    } else if (beta > alpha || bpm >= 100) {
-        valState.innerText = "ALTA ACTIVIDAD";
+    } else if (calmScore < 0.3) {
+        valState.innerText = "TENSIÓN BÁSICA";
         sphere.style.background = "var(--aura-stress)";
         sphere.style.transform = "scale(0.85)";
         sphere.style.filter = "blur(25px)";
@@ -205,7 +225,7 @@ mirrorWs.onmessage = (event) => {
     try {
         const msg = JSON.parse(event.data);
         if (msg.type === 'mirror_bio') {
-            window.updateBioData(msg.bpm, msg.alpha, msg.beta);
+            window.updateBioData(msg.bpm, msg.calm, msg.calibProgress);
         }
     } catch(e){}
 };

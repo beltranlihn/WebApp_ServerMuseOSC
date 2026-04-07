@@ -21,6 +21,16 @@
             <button id="btn-google-login" class="btn-primary">INICIAR SESIÓN</button>
         </div>
 
+        <!-- PANTALLA DE CALIBRACIÓN (30 SEGUNDOS) -->
+        <div id="calibration-screen" class="view hidden" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
+            <h2 style="color: #2ec4b6; letter-spacing: 0.1em; font-weight: 300;">ESTABLECIENDO BASAL NEURONAL</h2>
+            <p style="color: #FDFFFC; font-family: monospace; margin: 15px 0;">Calculando Mapeo Z-Score...</p>
+            <div style="width: 300px; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin: 20px 0; overflow: hidden;">
+                <div id="ui-calib-bar" style="width: 0%; background: #2ec4b6; height: 100%; transition: width 0.1s linear;"></div>
+            </div>
+            <span id="ui-calib-text" style="color: #2ec4b6; font-size: 1.5rem; font-family: monospace;">0%</span>
+        </div>
+
         <!-- DASHBOARD BIORREACTIVO (INDICADORES DE CALMA) -->
         <div id="dashboard-screen" class="view hidden">
             <!-- Esfera reactiva (Representación visual del aura/ondas) -->
@@ -35,12 +45,8 @@
                     <span id="val-bpm" class="value">--</span>
                 </div>
                 <div class="stat-box">
-                    <span class="label">ALPHA</span>
-                    <span id="val-alpha" class="value">--</span>
-                </div>
-                <div class="stat-box">
-                    <span class="label">BETA</span>
-                    <span id="val-beta" class="value">--</span>
+                    <span class="label">CALM STATE</span>
+                    <span id="val-calm" class="value">--</span>
                 </div>
                 <div class="stat-box">
                     <span class="label">ESTADO</span>

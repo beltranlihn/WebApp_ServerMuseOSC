@@ -18,12 +18,17 @@ let simTick = 0;
 let appState = 'INITIALIZING'; // INITIALIZING, CONNECTING, CALIBRATING, RUNNING
 let calibrationData = [];
 let baselinePromedio = 1;
+let baselineStdDev = 0.001;
 let smoothedCalmScore = 0;
 let calibrationProgress = 0; // (0 to 100)
 const MA_WINDOW = 180; // Ventana de media móvil (3s a 60Hz)
 let lastNCampsScores = [];
+let dynamicAlphaEma = 0.05;
+let sessionTotalTicks = 0;
+let sessionCalmTicks = 0;
+let calmFinal = 0.0;
 
-const TARGET_CALIBRATION_SAMPLES = 120; // 2s de datos válidos (60Hz)
+const TARGET_CALIBRATION_SAMPLES = 1800; // 30s de datos (a 60Hz)
 
 // Referencias UI
 const indState = document.getElementById('indicator-state');
@@ -124,6 +129,7 @@ function broadcastFullTelemetry(calmScore) {
         let outGyro = currentGyro;
         let outAccel = currentAccel;
         let outCalib = calibrationProgress;
+        let outCalmFinal = calmFinal;
         
         // Kill-switch coercitivo
         if (sensorOn === 0 || sensorActive === 0) {
@@ -133,6 +139,7 @@ function broadcastFullTelemetry(calmScore) {
             outGyro = [0, 0, 0];
             outAccel = [0, 0, 0];
             outCalib = 0;
+            outCalmFinal = 0;
         }
 
         ws.send(JSON.stringify({ 
@@ -148,7 +155,8 @@ function broadcastFullTelemetry(calmScore) {
             delta: outD,
             calm: outCalm,
             bpm: outBpm,
-            calibProgress: outCalib
+            calibProgress: outCalib,
+            calm_final: outCalmFinal
         }));
     }
 }
@@ -171,15 +179,26 @@ btnConnectMuse.addEventListener('click', async () => {
         
         sensorOn = 1; // Bandera de driver conectada exitosamente
 
+        // Listener activo para desconexiones físicas del hardware (Botón off, Batería, etc.)
+        museClient.connectionStatus.subscribe(status => {
+            sensorOn = status ? 1 : 0;
+            if (!status) {
+                sensorActive = 0;
+                setAppState('DISCONNECTED', 'Enlace Bluetooth de diadema totalmente desconectado.');
+                btnConnectMuse.innerText = "RECONECTAR MUSE";
+                btnConnectMuse.disabled = false;
+            }
+        });
+
         setAppState('CALIBRATING', 'Cierra los ojos y no aprietes los dientes...');
         if(progContainer) progContainer.style.display = "block";
 
         // Bucle Principal de Agente Legítimo (10Hz)
         // Separa la lógica de la saturación de 256Hz del hardware
         setInterval(() => {
-            // 1. Ratio Base actual
+            // 1. Ratio Base actual integrando Gamma como peso cognitivo
             // Simulamos haber extraido suma de potencias FFT
-            let currentRatio = rawAlpha / (rawBeta + 0.001); 
+            let currentRatio = rawAlpha / (rawBeta + (0.4 * rawGamma) + 0.001); 
 
             // 2. Detección de Artefactos Musculares (EMG)
             let isArtifact = rawGamma > 0.8; // Umbral de pico de mandíbula
@@ -188,6 +207,12 @@ btnConnectMuse.addEventListener('click', async () => {
             }
 
             if (appState === 'CALIBRATING') {
+                if (sensorActive === 0) {
+                    setAppState('CALIBRATING', 'Casco inactivo. Ajústalo a tu frente...');
+                    broadcastFullTelemetry(0.0);
+                    return; // Congelamos el cronómetro de calibración hasta que vuelva la lectura
+                }
+
                 // Siempre empujamos para evitar que la UI se trabe por ruido estático
                 calibrationData.push(currentRatio);
                 calibrationProgress = (calibrationData.length / TARGET_CALIBRATION_SAMPLES) * 100;
@@ -201,17 +226,27 @@ btnConnectMuse.addEventListener('click', async () => {
 
                 if (calibrationData.length >= TARGET_CALIBRATION_SAMPLES) {
                     baselinePromedio = calibrationData.reduce((a, b) => a + b, 0) / calibrationData.length;
-                    setAppState('RUNNING', `Baseline obtenido: ${baselinePromedio.toFixed(3)}`);
+                    
+                    let variance = calibrationData.reduce((a, b) => a + Math.pow(b - baselinePromedio, 2), 0) / calibrationData.length;
+                    baselineStdDev = Math.sqrt(variance);
+                    if (baselineStdDev < 0.0001) baselineStdDev = 0.0001; // Proteccion Div0
+
+                    setAppState('RUNNING', `Base: ${baselinePromedio.toFixed(2)} | SD: ${baselineStdDev.toFixed(2)}`);
                     if(progContainer) progContainer.style.display = "none";
                 }
+
+                // Inyectamos transmisión constate durante la calibración
+                // Para que el Node Relay envíe el 'mirror_bio' con el calibProgress actualizado
+                broadcastFullTelemetry(0.0);
             } else if (appState === 'RUNNING') {
                 calibrationProgress = 100.0;
                 // Restauramos descripción limpia si venía de un artefacto
-                if(indState && indState.innerText === 'RUNNING') setAppState('RUNNING', 'Emisión OSC /muse/v2/calm Activa');
+                if(indState && indState.innerText === 'RUNNING') setAppState('RUNNING', 'Emisión OSC de sesion iniciada');
                 
-                let normalizedScore = currentRatio / baselinePromedio;
-                // Clamp a rango útil [0.5, 1.5]
-                normalizedScore = Math.min(Math.max(normalizedScore, 0.5), 1.5);
+                // Mapeo por Z-Score
+                let zScore = (currentRatio - baselinePromedio) / baselineStdDev;
+                zScore = Math.min(Math.max(zScore, -2.0), 2.0); // Clamp [-2, 2]
+                let normalizedScore = (zScore + 2.0) / 4.0; // Mapeo lineal a [0.0, 1.0]
 
                 // Media Móvil
                 lastNCampsScores.push(normalizedScore);
@@ -219,13 +254,19 @@ btnConnectMuse.addEventListener('click', async () => {
                 
                 smoothedCalmScore = lastNCampsScores.reduce((a, b) => a + b, 0) / lastNCampsScores.length;
 
-                // Mapeo lineal [0.5 - 1.5] -> [0.0 - 1.0]
-                let finalOSCValue = (smoothedCalmScore - 0.5) * (1.0 - 0.0) / (1.5 - 0.5) + 0.0;
-                finalOSCValue = Math.min(Math.max(finalOSCValue, 0.0), 1.0);
+                // smoothedCalmScore ya está en un rango perfecto [0.0 - 1.0] gracias al clamping del zScore previo
+                let finalOSCValue = smoothedCalmScore;
 
                 if (isArtifact) {
                     finalOSCValue = 0.0; // Rechazo absoluto inmediato
                     setAppState('RUNNING', 'Tensión muscular detectada (Calma a 0)');
+                }
+
+                // Lógica final de sesión (% de tiempo en calma sobre 0.7)
+                if (sensorActive === 1) {
+                    sessionTotalTicks++;
+                    if (finalOSCValue > 0.7) sessionCalmTicks++;
+                    calmFinal = sessionCalmTicks / sessionTotalTicks;
                 }
 
                 broadcastFullTelemetry(finalOSCValue);
@@ -241,10 +282,15 @@ btnConnectMuse.addEventListener('click', async () => {
             if (!samples || samples.length === 0) return;
             const avgPower = samples.reduce((acc, val) => acc + Math.abs(val), 0) / samples.length;
             
-            // Si el hardware envía un flatline muy limpio (<5uV continuo), asumimos que se quitó el casco
-            if (avgPower < 5.0) sensorActive = 0;
+            // Detectamos si el casco está puesto en la frente (Skin Contact).
+            // Si lo dejan en la mesa genera un 'flatline' absoluto muy bajo (< 1.0uV).
+            if (avgPower < 1.0) {
+                sensorActive = 0;
+            } else {
+                sensorActive = 1;
+            }
             
-            rawAlpha = smooth(rawAlpha, ((avgPower * 0.1) % 1.0), 0.05); 
+            rawAlpha = smooth(rawAlpha, ((avgPower * 0.1) % 1.0), dynamicAlphaEma); 
             rawBeta  = smooth(rawBeta,  ((avgPower * 0.2) % 1.0), 0.05);
             rawTheta = smooth(rawTheta, ((avgPower * 0.15) % 1.0), 0.05);
             rawDelta = smooth(rawDelta, ((avgPower * 0.05) % 1.0), 0.05);
@@ -271,6 +317,10 @@ btnConnectMuse.addEventListener('click', async () => {
                 currentAccel[0] = smooth(currentAccel[0], s.x, 0.2);
                 currentAccel[1] = smooth(currentAccel[1], s.y, 0.2);
                 currentAccel[2] = smooth(currentAccel[2], s.z, 0.2);
+
+                // EMA Filter Inercial dinámico para amortiguar saltos violentos
+                let magnitude = Math.sqrt(s.x*s.x + s.y*s.y + s.z*s.z);
+                dynamicAlphaEma = magnitude > 1.2 ? 0.01 : 0.05;
             }
         });
         
@@ -280,5 +330,6 @@ btnConnectMuse.addEventListener('click', async () => {
         sensorActive = 0;
         setAppState('DISCONNECTED', 'Error al conectar.');
         btnConnectMuse.innerText = "ERROR - REINTENTAR";
+        btnConnectMuse.disabled = false;
     }
 });
