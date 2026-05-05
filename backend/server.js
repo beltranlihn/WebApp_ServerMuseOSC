@@ -27,6 +27,20 @@ function initUDP() {
     udpPort.on("error", function (err) {
         console.error("[OSC] Error UDP: ", err);
     });
+
+    // Escucha de comandos entrantes desde Unreal
+    udpPort.on("message", function (oscMsg) {
+        if (oscMsg.address === "/unreal/end_session") {
+            console.log("[OSC IN] Recibida orden de fin de sesión desde Unreal.");
+            if (typeof wss !== 'undefined') {
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ type: 'unreal_command', command: 'end_session' }));
+                    }
+                });
+            }
+        }
+    });
 }
 
 initUDP();
@@ -80,7 +94,7 @@ wss.on('connection', function connection(ws) {
                 const {
                     sensorOn, sensorActive, gyro, accel, 
                     alpha, beta, gamma, theta, delta, 
-                    calm, bpm, calibProgress, calm_final
+                    calm, bpm, calibProgress, calm_final, calib_completed, headset_id
                 } = parsedData;
 
                 let fOn = safeFloat(sensorOn ? 1 : 0, 'status_on');
@@ -112,7 +126,8 @@ wss.on('connection', function connection(ws) {
                     14: isOff ? 0.0 : safeFloat(calm, 'calm_state'),
                     15: isOff ? 0.0 : safeFloat(bpm, 'heart_rate'),
                     16: safeFloat(calibProgress, 'calib_progress'),
-                    17: isOff ? 0.0 : safeFloat(calm_final, 'calm_final')
+                    17: isOff ? 0.0 : safeFloat(calm_final, 'calm_final'),
+                    18: isOff ? 0.0 : safeFloat(calib_completed, 'calib_completed')
                 };
 
                 // Revertido al Array Bloque Único (Monolithic Payload) para evitar problemas de Blueprint
@@ -125,7 +140,14 @@ wss.on('connection', function connection(ws) {
                         { type: "f", value: v[9] }, { type: "f", value: v[10] }, { type: "f", value: v[11] },
                         { type: "f", value: v[12] }, { type: "f", value: v[13] }, 
                         { type: "f", value: v[14] }, { type: "f", value: v[15] },
-                        { type: "f", value: v[16] }, { type: "f", value: v[17] }
+                        { type: "f", value: v[16] }, { type: "f", value: v[17] }, { type: "f", value: v[18] }
+                    ]
+                });
+
+                udpPort.send({
+                    address: "/muse/headset",
+                    args: [
+                        { type: "s", value: headset_id || "Unknown_Muse" }
                     ]
                 });
 

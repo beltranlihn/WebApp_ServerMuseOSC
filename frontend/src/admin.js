@@ -27,6 +27,7 @@ let dynamicAlphaEma = 0.05;
 let sessionTotalTicks = 0;
 let sessionCalmTicks = 0;
 let calmFinal = 0.0;
+let calibTriggerFired = false;
 
 const TARGET_CALIBRATION_SAMPLES = 1800; // 30s de datos (a 60Hz)
 
@@ -53,6 +54,7 @@ let eegWatchdog = null;
 
 // Mantenemos BPM separado simulado o extraído (Muse 2 PPG no activo por defecto)
 let currentBpm = 75;
+let headsetName = "Unknown_Muse";
 
 function smooth(current, target, factor = 0.05) {
     if (current === undefined || Number.isNaN(current)) return target;
@@ -131,6 +133,14 @@ function broadcastFullTelemetry(calmScore) {
         let outCalib = calibrationProgress;
         let outCalmFinal = calmFinal;
         
+        let outCalibCompleted = 0.0;
+        if (appState === 'RUNNING' && !calibTriggerFired) {
+            outCalibCompleted = 1.0;
+            calibTriggerFired = true;
+        } else if (appState !== 'RUNNING') {
+            calibTriggerFired = false;
+        }
+        
         // Kill-switch coercitivo
         if (sensorOn === 0 || sensorActive === 0) {
             outBpm = 0;
@@ -140,6 +150,8 @@ function broadcastFullTelemetry(calmScore) {
             outAccel = [0, 0, 0];
             outCalib = 0;
             outCalmFinal = 0;
+            outCalibCompleted = 0;
+            // No reseteamos headsetName para no perderlo por microcortes
         }
 
         ws.send(JSON.stringify({ 
@@ -156,7 +168,9 @@ function broadcastFullTelemetry(calmScore) {
             calm: outCalm,
             bpm: outBpm,
             calibProgress: outCalib,
-            calm_final: outCalmFinal
+            calm_final: outCalmFinal,
+            calib_completed: outCalibCompleted,
+            headset_id: headsetName
         }));
     }
 }
@@ -173,7 +187,9 @@ btnConnectMuse.addEventListener('click', async () => {
         await museClient.connect();
         await museClient.start();
         
-        btnConnectMuse.innerText = "MUSE CONECTADO";
+        headsetName = museClient.deviceName || "Muse_User";
+        
+        btnConnectMuse.innerText = `MUSE CONECTADO (${headsetName})`;
         btnConnectMuse.disabled = true;
         if(btnSimulate) btnSimulate.disabled = true;
         
@@ -215,8 +231,8 @@ btnConnectMuse.addEventListener('click', async () => {
 
                 // Siempre empujamos para evitar que la UI se trabe por ruido estático
                 calibrationData.push(currentRatio);
-                calibrationProgress = (calibrationData.length / TARGET_CALIBRATION_SAMPLES) * 100;
-                if(progBar) progBar.style.width = `${Math.min(calibrationProgress, 100)}%`;
+                calibrationProgress = (calibrationData.length / TARGET_CALIBRATION_SAMPLES);
+                if(progBar) progBar.style.width = `${Math.min(calibrationProgress * 100, 100)}%`;
                 
                 if (isArtifact) {
                     setAppState('CALIBRATING', '¡Ruido detectado! (Tensión muscular)');
@@ -239,7 +255,7 @@ btnConnectMuse.addEventListener('click', async () => {
                 // Para que el Node Relay envíe el 'mirror_bio' con el calibProgress actualizado
                 broadcastFullTelemetry(0.0);
             } else if (appState === 'RUNNING') {
-                calibrationProgress = 100.0;
+                calibrationProgress = 1.0;
                 // Restauramos descripción limpia si venía de un artefacto
                 if(indState && indState.innerText === 'RUNNING') setAppState('RUNNING', 'Emisión OSC de sesion iniciada');
                 

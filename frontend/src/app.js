@@ -158,9 +158,9 @@ window.updateBioData = (bpm, calmScore, calibProgress) => {
     
     // Lógica de ruteo de Pantallas Automática
     if (isInCalibration) {
-        if (uiCalibBar) uiCalibBar.style.width = `${calibProgress}%`;
-        if (uiCalibText) uiCalibText.innerText = `${Math.round(calibProgress)}%`;
-        if (calibProgress >= 100) {
+        if (uiCalibBar) uiCalibBar.style.width = `${calibProgress * 100}%`;
+        if (uiCalibText) uiCalibText.innerText = `${Math.round(calibProgress * 100)}%`;
+        if (calibProgress >= 1) {
             showDashboard();
         }
         return; // No actualizamos dashboard si estamos calibrando
@@ -226,6 +226,11 @@ mirrorWs.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         if (msg.type === 'mirror_bio') {
             window.updateBioData(msg.bpm, msg.calm, msg.calibProgress);
+        } else if (msg.type === 'unreal_command' && msg.command === 'end_session') {
+            const endBtn = document.getElementById('btn-end-session');
+            if (endBtn && !endBtn.disabled) {
+                endBtn.click();
+            }
         }
     } catch(e){}
 };
